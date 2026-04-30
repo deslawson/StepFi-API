@@ -15,6 +15,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { BlockchainIndexerModule } from './jobs/blockchain-indexer/blockchain-indexer.module';
 import { LoanPaymentReminderModule } from './jobs/loan-payment-reminder/loan-payment-reminder.module';
 import { TransactionStatusCheckerModule } from './jobs/transaction-status-checker/transaction-status-checker.module';
+import { NonceCleanupModule } from './jobs/nonce-cleanup/nonce-cleanup.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { TransactionStatusCheckerModule } from './jobs/transaction-status-checke
     BlockchainIndexerModule,
     LoanPaymentReminderModule,
     TransactionStatusCheckerModule,
+    NonceCleanupModule,
   ],
   controllers: [],
   providers: [

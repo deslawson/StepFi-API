@@ -18,7 +18,7 @@ type LoanRow = {
   id: string;
   loan_id: string;
   user_wallet: string;
-  merchant_id: string;
+  vendor_id: string;
   amount: number;
   loan_amount: number;
   guarantee: number;
@@ -37,11 +37,11 @@ describe('Loan Lifecycle Flow (e2e)', () => {
   let app: NestFastifyApplication;
 
   const validWallet = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRSTUVW';
-  const merchantId = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
+  const vendorId = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
 
   const state = {
     nowIso: '2026-04-28T10:00:00.000Z',
-    merchantActive: true,
+    vendorVerified: true,
     maxCredit: 3000,
     score: 75,
     interestRate: 8,
@@ -84,14 +84,14 @@ describe('Loan Lifecycle Flow (e2e)', () => {
   };
 
   function buildSupabaseQuery(table: string) {
-    if (table === 'merchants') {
+    if (table === 'vendors') {
       return {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
         single: jest.fn().mockResolvedValue({
-          data: state.merchantActive
-            ? { id: merchantId, name: 'TechStore', is_active: true }
-            : { id: merchantId, name: 'TechStore', is_active: false },
+          data: state.vendorVerified
+            ? { id: vendorId, name: 'TechStore', verified: true }
+            : { id: vendorId, name: 'TechStore', verified: false },
           error: null,
         }),
       };
@@ -130,10 +130,9 @@ describe('Loan Lifecycle Flow (e2e)', () => {
               )
               .map((loan) => ({
                 ...loan,
-                merchants: {
-                  id: merchantId,
+                vendors: {
+                  id: vendorId,
                   name: 'TechStore',
-                  logo: 'https://cdn.stepfi.app/techstore.png',
                 },
                 loan_payments: loan.status === 'completed' ? [{ amount: loan.total_repayment }] : [],
               })),
@@ -151,11 +150,11 @@ describe('Loan Lifecycle Flow (e2e)', () => {
             return { data: loan ?? null, error: loan ? null : { message: 'not found' } };
           }
 
-          if (queryState.selected.includes('id, name, is_active')) {
+          if (queryState.selected.includes('id, name, verified')) {
             return {
-              data: state.merchantActive
-                ? { id: merchantId, name: 'TechStore', is_active: true }
-                : { id: merchantId, name: 'TechStore', is_active: false },
+              data: state.vendorVerified
+                ? { id: vendorId, name: 'TechStore', verified: true }
+                : { id: vendorId, name: 'TechStore', verified: false },
               error: null,
             };
           }
@@ -167,7 +166,7 @@ describe('Loan Lifecycle Flow (e2e)', () => {
             id: `11111111-2222-3333-4444-${String(state.loans.length + 1).padStart(12, '0')}`,
             loan_id: String(payload.loan_id),
             user_wallet: String(payload.user_wallet),
-            merchant_id: String(payload.merchant_id),
+            vendor_id: String(payload.vendor_id),
             amount: Number(payload.amount),
             loan_amount: Number(payload.loan_amount),
             guarantee: Number(payload.guarantee),
@@ -265,7 +264,7 @@ describe('Loan Lifecycle Flow (e2e)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    state.merchantActive = true;
+    state.vendorVerified = true;
     state.maxCredit = 3000;
     state.score = 75;
     state.interestRate = 8;
@@ -373,7 +372,7 @@ describe('Loan Lifecycle Flow (e2e)', () => {
       method: 'POST',
       url: '/loans/quote',
       headers: { authorization: 'Bearer test.jwt' },
-      payload: { amount: 500, merchant: merchantId, term: 4 },
+      payload: { amount: 500, vendor: vendorId, term: 4 },
     });
 
     expect(quoteRes.statusCode).toBe(200);
@@ -391,7 +390,7 @@ describe('Loan Lifecycle Flow (e2e)', () => {
       method: 'POST',
       url: '/loans/create',
       headers: { authorization: 'Bearer test.jwt' },
-      payload: { amount: 500, merchant: merchantId, term: 4 },
+      payload: { amount: 500, vendor: vendorId, term: 4 },
     });
 
     expect(createRes.statusCode).toBe(200);
@@ -456,19 +455,19 @@ describe('Loan Lifecycle Flow (e2e)', () => {
     expect(state.loans[0].remaining_balance).toBe(0);
   });
 
-  it('should validate inactive merchant and insufficient credit errors', async () => {
-    state.merchantActive = false;
+  it('should validate unverified vendor and insufficient credit errors', async () => {
+    state.vendorVerified = false;
 
-    const inactiveMerchantRes = await app.inject({
+    const unverifiedVendorRes = await app.inject({
       method: 'POST',
       url: '/loans/quote',
       headers: { authorization: 'Bearer test.jwt' },
-      payload: { amount: 500, merchant: merchantId, term: 4 },
+      payload: { amount: 500, vendor: vendorId, term: 4 },
     });
 
-    expect(inactiveMerchantRes.statusCode).toBe(400);
+    expect(unverifiedVendorRes.statusCode).toBe(400);
 
-    state.merchantActive = true;
+    state.vendorVerified = true;
     state.maxCredit = 100;
     mockReputationService.getReputationScore.mockResolvedValue({
       wallet: validWallet,
@@ -483,7 +482,7 @@ describe('Loan Lifecycle Flow (e2e)', () => {
       method: 'POST',
       url: '/loans/create',
       headers: { authorization: 'Bearer test.jwt' },
-      payload: { amount: 500, merchant: merchantId, term: 4 },
+      payload: { amount: 500, vendor: vendorId, term: 4 },
     });
 
     expect(lowCreditRes.statusCode).toBe(400);

@@ -52,7 +52,7 @@ export class LoansController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input or amount exceeds credit limit' })
   @ApiResponse({ status: 401, description: 'Unauthorized - missing or invalid JWT' })
-  @ApiResponse({ status: 404, description: 'Merchant not found' })
+  @ApiResponse({ status: 404, description: 'Vendor not found' })
   async getLoanQuote(
     @CurrentUser() user: { wallet: string },
     @Body() dto: LoanQuoteRequestDto,
@@ -67,7 +67,7 @@ export class LoansController {
   @ApiOperation({
     summary: 'List loans for the authenticated user',
     description:
-      'Returns paginated loans for the authenticated user ordered by creation date (newest first). Supports filtering by active, completed, or defaulted status and includes merchant information plus payment summary fields.',
+      'Returns paginated loans for the authenticated user ordered by creation date (newest first). Supports filtering by active, completed, or defaulted status and includes vendor information plus payment summary fields.',
   })
   @ApiQuery({
     name: 'status',
@@ -141,7 +141,7 @@ export class LoansController {
     description: 'Invalid input, insufficient reputation, or amount exceeds credit limit',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized - missing or invalid JWT' })
-  @ApiResponse({ status: 404, description: 'Merchant not found' })
+  @ApiResponse({ status: 404, description: 'Vendor not found' })
   @ApiResponse({ status: 500, description: 'Failed to construct XDR or persist pending loan' })
   async createLoan(
     @CurrentUser() user: { wallet: string },

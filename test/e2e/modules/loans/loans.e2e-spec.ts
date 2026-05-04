@@ -13,7 +13,7 @@ describe('LoansController (e2e)', () => {
   let app: NestFastifyApplication;
 
   const validWallet = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRSTUVW';
-  const merchantId = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
+  const vendorId = 'a1b2c3d4-e5f6-4890-abcd-ef1234567890';
 
   const mockCreditLineContract = {
     buildCreateLoanTransaction: jest.fn().mockResolvedValue('AAAAAgAAAAC...'),
@@ -32,7 +32,7 @@ describe('LoansController (e2e)', () => {
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockReturnThis(),
     single: jest.fn().mockResolvedValue({
-      data: { id: merchantId, name: 'TechStore', is_active: true },
+      data: { id: vendorId, name: 'TechStore', verified: true },
       error: null,
     }),
     insert: jest.fn().mockResolvedValue({ error: null }),
@@ -106,7 +106,7 @@ describe('LoansController (e2e)', () => {
     mockSupabaseFrom.order.mockReturnThis();
     mockSupabaseFrom.range.mockReturnThis();
     mockSupabaseFrom.single.mockResolvedValue({
-      data: { id: merchantId, name: 'TechStore', is_active: true },
+      data: { id: vendorId, name: 'TechStore', verified: true },
       error: null,
     });
     mockSupabaseFrom.insert.mockResolvedValue({ error: null });
@@ -135,7 +135,7 @@ describe('LoansController (e2e)', () => {
   });
 
   describe('POST /loans/quote', () => {
-    const validBody = { amount: 500, merchant: merchantId, term: 4 };
+    const validBody = { amount: 500, vendor: vendorId, term: 4 };
 
     it('should return 200 with a valid loan quote in response envelope', async () => {
       const res = await app.inject({
@@ -168,12 +168,12 @@ describe('LoansController (e2e)', () => {
       expect(res.statusCode).toBe(401);
     });
 
-    it('should return 400 for invalid merchant UUID', async () => {
+    it('should return 400 for invalid vendor UUID', async () => {
       const res = await app.inject({
         method: 'POST',
         url: '/loans/quote',
         headers: { authorization: 'Bearer valid.jwt.token' },
-        payload: { ...validBody, merchant: 'not-a-uuid' },
+        payload: { ...validBody, vendor: 'not-a-uuid' },
       });
 
       expect(res.statusCode).toBe(400);
@@ -181,7 +181,7 @@ describe('LoansController (e2e)', () => {
   });
 
   describe('POST /loans/create', () => {
-    const validBody = { amount: 500, merchant: merchantId, term: 4 };
+    const validBody = { amount: 500, vendor: vendorId, term: 4 };
 
     it('should return 200 with loanId, xdr, and terms', async () => {
       const res = await app.inject({
@@ -217,7 +217,7 @@ describe('LoansController (e2e)', () => {
         method: 'POST',
         url: '/loans/create',
         headers: { authorization: 'Bearer valid.jwt.token' },
-        payload: { amount: 500, merchant: merchantId },
+        payload: { amount: 500, vendor: vendorId },
       });
 
       expect(res.statusCode).toBe(400);
@@ -251,7 +251,7 @@ describe('LoansController (e2e)', () => {
           {
             id: '11111111-2222-3333-4444-555555555555',
             loan_id: 'chain-loan-1',
-            merchant_id: merchantId,
+            vendor_id: vendorId,
             amount: 500,
             loan_amount: 400,
             guarantee: 100,
@@ -264,10 +264,9 @@ describe('LoansController (e2e)', () => {
             created_at: '2026-03-13T00:00:00.000Z',
             completed_at: null,
             defaulted_at: null,
-            merchants: {
-              id: merchantId,
+            vendors: {
+              id: vendorId,
               name: 'TechStore',
-              logo: 'https://cdn.stepfi.app/techstore.png',
             },
             loan_payments: [{ amount: 102.66 }, { amount: 102.68 }],
           },
@@ -300,10 +299,9 @@ describe('LoansController (e2e)', () => {
             remainingBalance: 205.33,
             term: 4,
             status: 'active',
-            merchant: {
-              id: merchantId,
+            vendor: {
+              id: vendorId,
               name: 'TechStore',
-              logo: 'https://cdn.stepfi.app/techstore.png',
             },
             nextPayment: {
               dueDate: '2026-04-13T00:00:00.000Z',

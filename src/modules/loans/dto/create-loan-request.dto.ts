@@ -11,10 +11,10 @@ export class CreateLoanRequestDto extends LoanQuoteRequestDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Merchant UUID',
+    description: 'Vendor UUID',
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   })
-  merchant: string;
+  vendor: string;
 
   @ApiProperty({
     description: 'Loan term in months (1-12)',

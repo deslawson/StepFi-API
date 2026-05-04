@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * DTO for requesting a loan quote calculation.
- * Validates the purchase amount, merchant, and repayment term.
+ * Validates the purchase amount, vendor, and repayment term.
  */
 export class LoanQuoteRequestDto {
   @ApiProperty({
@@ -18,11 +18,11 @@ export class LoanQuoteRequestDto {
   amount: number;
 
   @ApiProperty({
-    description: 'Merchant UUID',
+    description: 'Vendor UUID',
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   })
-  @IsUUID('4', { message: 'Merchant must be a valid UUID' })
-  merchant: string;
+  @IsUUID('4', { message: 'Vendor must be a valid UUID' })
+  vendor: string;
 
   @ApiProperty({
     description: 'Loan term in months (1-12)',

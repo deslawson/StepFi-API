@@ -4,7 +4,7 @@ export interface ActiveLoan {
   id: string;
   loan_id: string;
   user_wallet: string;
-  merchant_id: string | null;
+  vendor_id: string | null;
   amount: string;
   loan_amount: string;
   next_payment_due: string | null;
@@ -12,7 +12,7 @@ export interface ActiveLoan {
   term: number;
 }
 
-export interface MerchantInfo {
+export interface VendorInfo {
   id: string;
   name: string;
 }

@@ -1,18 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { LoanListStatusFilter } from './loan-list-query.dto';
 
-export class LoanListMerchantDto {
+export class LoanListVendorDto {
   @ApiProperty({ example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', nullable: true })
   id: string | null;
 
   @ApiProperty({ example: 'TechStore', nullable: true })
   name: string | null;
-
-  @ApiProperty({
-    example: 'https://cdn.stepfi.app/merchants/techstore.png',
-    nullable: true,
-  })
-  logo: string | null;
 }
 
 export class LoanNextPaymentDto {
@@ -57,8 +51,8 @@ export class LoanListItemDto {
   @ApiProperty({ enum: LoanListStatusFilter, example: LoanListStatusFilter.ACTIVE })
   status: LoanListStatusFilter;
 
-  @ApiProperty({ type: LoanListMerchantDto })
-  merchant: LoanListMerchantDto;
+  @ApiProperty({ type: LoanListVendorDto })
+  vendor: LoanListVendorDto;
 
   @ApiProperty({ type: LoanNextPaymentDto })
   nextPayment: LoanNextPaymentDto;

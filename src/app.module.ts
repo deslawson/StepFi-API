@@ -8,10 +8,13 @@ import { HealthModule } from './modules/health/health.module';
 import { LoansModule } from './modules/loans/loans.module';
 import { ReputationModule } from './modules/reputation/reputation.module';
 import { UsersModule } from './modules/users/users.module';
-import { MerchantsModule } from './modules/merchants/merchants.module';
+import { VendorsModule } from './modules/vendors/vendors.module';
+import { VouchingModule } from './modules/vouching/vouching.module';
+import { SponsorsModule } from './modules/sponsors/sponsors.module';
 import { LiquidityModule } from './modules/liquidity/liquidity.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { LearnersModule } from './modules/learners/learners.module';
 import { BlockchainIndexerModule } from './jobs/blockchain-indexer/blockchain-indexer.module';
 import { LoanPaymentReminderModule } from './jobs/loan-payment-reminder/loan-payment-reminder.module';
 import { TransactionStatusCheckerModule } from './jobs/transaction-status-checker/transaction-status-checker.module';
@@ -41,10 +44,13 @@ import { NonceCleanupModule } from './jobs/nonce-cleanup/nonce-cleanup.module';
     LoansModule,
     ReputationModule,
     UsersModule,
-    MerchantsModule,
+    VendorsModule,
+    VouchingModule,
+    SponsorsModule,
     LiquidityModule,
     NotificationsModule,
     TransactionsModule,
+    LearnersModule,
     BlockchainIndexerModule,
     LoanPaymentReminderModule,
     TransactionStatusCheckerModule,

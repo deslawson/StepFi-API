@@ -12,7 +12,7 @@ export function setupSwagger(app: INestApplication): void {
     .addTag('loans', 'Loan lifecycle management')
     .addTag('reputation', 'On-chain reputation scoring')
     .addTag('liquidity', 'Liquidity pool operations')
-    .addTag('merchants', 'Vendor registry')
+    .addTag('vendors', 'Learning vendor registry')
     .addTag('transactions', 'Transaction submission and tracking')
     .addTag('notifications', 'User notifications')
     .addTag('health', 'Health check')

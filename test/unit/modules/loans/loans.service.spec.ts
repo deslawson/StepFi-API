@@ -16,7 +16,7 @@ describe('LoansService', () => {
   let service: LoansService;
 
   const validWallet = 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRSTUVW';
-  const merchantId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+  const vendorId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
   const mockReputationService = {
     getReputationScore: jest.fn(),
@@ -83,7 +83,7 @@ describe('LoansService', () => {
   });
 
   describe('calculateLoanQuote', () => {
-    const baseDto = { amount: 500, merchant: merchantId, term: 4 };
+    const baseDto = { amount: 500, vendor: vendorId, term: 4 };
 
     function mockReputation(score: number, tier: string, interestRate: number, maxCredit: number) {
       mockReputationService.getReputationScore.mockResolvedValue({
@@ -96,14 +96,14 @@ describe('LoansService', () => {
       });
     }
 
-    function mockMerchantFound(isActive = true) {
+    function mockVendorFound(isActive = true) {
       mockSupabaseFrom.single.mockResolvedValue({
-        data: { id: merchantId, name: 'TechStore', is_active: isActive },
+        data: { id: vendorId, name: 'TechStore', verified: isActive },
         error: null,
       });
     }
 
-    function mockMerchantNotFound() {
+    function mockVendorNotFound() {
       mockSupabaseFrom.single.mockResolvedValue({
         data: null,
         error: { message: 'not found' },
@@ -112,7 +112,7 @@ describe('LoansService', () => {
 
     it('should calculate a quote for a gold tier user', async () => {
       mockReputation(95, 'gold', 5, 7500);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.calculateLoanQuote(validWallet, baseDto);
 
@@ -127,7 +127,7 @@ describe('LoansService', () => {
 
     it('should calculate a quote for a silver tier user', async () => {
       mockReputation(75, 'silver', 8, 2000);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.calculateLoanQuote(validWallet, baseDto);
 
@@ -138,7 +138,7 @@ describe('LoansService', () => {
 
     it('should calculate a quote for a bronze tier user', async () => {
       mockReputation(65, 'bronze', 9, 1500);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.calculateLoanQuote(validWallet, baseDto);
 
@@ -149,7 +149,7 @@ describe('LoansService', () => {
 
     it('should calculate a quote for a poor tier user', async () => {
       mockReputation(40, 'poor', 12, 700);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.calculateLoanQuote(validWallet, {
         ...baseDto,
@@ -163,7 +163,7 @@ describe('LoansService', () => {
 
     it('should reject amount exceeding max credit', async () => {
       mockReputation(40, 'poor', 12, 300);
-      mockMerchantFound();
+      mockVendorFound();
 
       await expect(service.calculateLoanQuote(validWallet, baseDto)).rejects.toThrow(
         BadRequestException,
@@ -174,35 +174,35 @@ describe('LoansService', () => {
       });
     });
 
-    it('should throw NotFoundException when merchant does not exist', async () => {
+    it('should throw NotFoundException when vendor does not exist', async () => {
       mockReputation(75, 'silver', 8, 2000);
-      mockMerchantNotFound();
+      mockVendorNotFound();
 
       await expect(service.calculateLoanQuote(validWallet, baseDto)).rejects.toThrow(
         NotFoundException,
       );
 
       await expect(service.calculateLoanQuote(validWallet, baseDto)).rejects.toMatchObject({
-        response: { code: 'MERCHANT_NOT_FOUND' },
+        response: { code: 'VENDOR_NOT_FOUND' },
       });
     });
 
-    it('should throw BadRequestException when merchant is inactive', async () => {
+    it('should throw BadRequestException when vendor is not verified', async () => {
       mockReputation(75, 'silver', 8, 2000);
-      mockMerchantFound(false);
+      mockVendorFound(false);
 
       await expect(service.calculateLoanQuote(validWallet, baseDto)).rejects.toThrow(
         BadRequestException,
       );
 
       await expect(service.calculateLoanQuote(validWallet, baseDto)).rejects.toMatchObject({
-        response: { code: 'MERCHANT_INACTIVE' },
+        response: { code: 'VENDOR_NOT_VERIFIED' },
       });
     });
 
     it('should set guarantee to 20% and loan to 80% of amount', async () => {
       mockReputation(90, 'gold', 5, 10000);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.calculateLoanQuote(validWallet, {
         ...baseDto,
@@ -215,7 +215,7 @@ describe('LoansService', () => {
 
     it('should handle fractional amounts correctly', async () => {
       mockReputation(90, 'gold', 4, 10000);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.calculateLoanQuote(validWallet, {
         ...baseDto,
@@ -230,7 +230,7 @@ describe('LoansService', () => {
   });
 
   describe('createLoan', () => {
-    const baseDto = { amount: 500, merchant: merchantId, term: 4 };
+    const baseDto = { amount: 500, vendor: vendorId, term: 4 };
 
     function mockReputation(score: number, tier: string, interestRate: number, maxCredit: number) {
       mockReputationService.getReputationScore.mockResolvedValue({
@@ -243,16 +243,16 @@ describe('LoansService', () => {
       });
     }
 
-    function mockMerchantFound(isActive = true) {
+    function mockVendorFound(isActive = true) {
       mockSupabaseFrom.single.mockResolvedValue({
-        data: { id: merchantId, name: 'TechStore', is_active: isActive },
+        data: { id: vendorId, name: 'TechStore', verified: isActive },
         error: null,
       });
     }
 
     it('should create a pending loan with XDR and terms', async () => {
       mockReputation(75, 'silver', 8, 2000);
-      mockMerchantFound();
+      mockVendorFound();
 
       const result = await service.createLoan(validWallet, baseDto);
 
@@ -265,7 +265,7 @@ describe('LoansService', () => {
       expect(mockSupabaseFrom.insert).toHaveBeenCalledWith(
         expect.objectContaining({
           user_wallet: validWallet,
-          merchant_id: merchantId,
+          vendor_id: vendorId,
           status: 'pending',
           next_payment_due: expect.any(String),
         }),
@@ -274,7 +274,7 @@ describe('LoansService', () => {
 
     it('should reject loan creation when reputation is below minimum threshold', async () => {
       mockReputation(59, 'poor', 12, 500);
-      mockMerchantFound();
+      mockVendorFound();
 
       await expect(service.createLoan(validWallet, { ...baseDto, amount: 200 })).rejects.toMatchObject(
         {
@@ -285,7 +285,7 @@ describe('LoansService', () => {
 
     it('should throw InternalServerErrorException when XDR construction fails', async () => {
       mockReputation(75, 'silver', 8, 2000);
-      mockMerchantFound();
+      mockVendorFound();
       mockCreditLineContractClient.buildCreateLoanTransaction.mockRejectedValue(
         new Error('Soroban unavailable'),
       );
@@ -297,7 +297,7 @@ describe('LoansService', () => {
 
     it('should throw InternalServerErrorException when pending loan persistence fails', async () => {
       mockReputation(75, 'silver', 8, 2000);
-      mockMerchantFound();
+      mockVendorFound();
       mockSupabaseFrom.insert.mockResolvedValue({
         error: { message: 'insert failed' },
       });
@@ -544,7 +544,7 @@ describe('LoansService', () => {
               {
                 id: '11111111-2222-3333-4444-555555555555',
                 loan_id: 'chain-loan-1',
-                merchant_id: merchantId,
+                vendor_id: vendorId,
                 amount: 500,
                 loan_amount: 400,
                 guarantee: 100,
@@ -557,10 +557,9 @@ describe('LoansService', () => {
                 created_at: '2026-03-13T00:00:00.000Z',
                 completed_at: null,
                 defaulted_at: null,
-                merchants: {
-                  id: merchantId,
+                vendors: {
+                  id: vendorId,
                   name: 'TechStore',
-                  logo: 'https://cdn.stepfi.app/techstore.png',
                 },
                 loan_payments: [{ amount: 102.66 }, { amount: 102.68 }],
               },
@@ -601,10 +600,9 @@ describe('LoansService', () => {
             remainingBalance: 205.33,
             term: 4,
             status: LoanListStatusFilter.ACTIVE,
-            merchant: {
-              id: merchantId,
+            vendor: {
+              id: vendorId,
               name: 'TechStore',
-              logo: 'https://cdn.stepfi.app/techstore.png',
             },
             nextPayment: {
               dueDate: '2026-04-13T00:00:00.000Z',

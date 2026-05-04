@@ -20,7 +20,7 @@ import { AvailableCreditResponseDto } from './dto/available-credit-response.dto'
 import { LoanListQueryDto, LoanListStatusFilter } from './dto/loan-list-query.dto';
 import {
   LoanListItemDto,
-  LoanListMerchantDto,
+  LoanListVendorDto,
   LoanListResponseDto,
 } from './dto/loan-list-response.dto';
 import { ReputationTier } from '../reputation/dto/reputation-response.dto';
@@ -29,16 +29,16 @@ const GUARANTEE_PERCENT = 0.2;
 const LOAN_PERCENT = 0.8;
 const MIN_LOAN_REPUTATION_SCORE = 60;
 
-interface ValidMerchant {
+interface ValidVendor {
   id: string;
   name: string;
-  is_active: boolean;
+  verified: boolean;
 }
 
 interface CreateLoanRecord {
   loan_id: string;
   user_wallet: string;
-  merchant_id: string;
+  vendor_id: string;
   amount: number;
   loan_amount: number;
   guarantee: number;
@@ -54,16 +54,15 @@ interface LoanPaymentRow {
   amount: number | string | null;
 }
 
-interface LoanMerchantRow {
+interface LoanVendorRow {
   id: string | null;
   name: string | null;
-  logo: string | null;
 }
 
 interface LoanListRow {
   id: string;
   loan_id: string;
-  merchant_id: string | null;
+  vendor_id: string | null;
   amount: number | string;
   loan_amount: number | string;
   guarantee: number | string;
@@ -76,7 +75,7 @@ interface LoanListRow {
   created_at: string;
   completed_at: string | null;
   defaulted_at: string | null;
-  merchants?: LoanMerchantRow | LoanMerchantRow[] | null;
+  vendors?: LoanVendorRow | LoanVendorRow[] | null;
   loan_payments?: LoanPaymentRow[] | null;
 }
 
@@ -100,15 +99,15 @@ export class LoansService {
   }
 
   async createLoan(wallet: string, dto: CreateLoanRequestDto): Promise<CreateLoanResponseDto> {
-    const { merchant, terms } = await this.prepareLoanPreview(wallet, dto, true);
+    const { vendor, terms } = await this.prepareLoanPreview(wallet, dto, true);
     const loanId = this.generateProvisionalLoanId();
-    const description = `Create BNPL loan for $${dto.amount} at ${merchant.name}`;
+    const description = `Create BNPL loan for $${dto.amount} at ${vendor.name}`;
 
     let xdr: string;
     try {
       xdr = await this.creditLineContractClient.buildCreateLoanTransaction(wallet, {
         loanId,
-        merchantId: merchant.id,
+        vendorId: vendor.id,
         amount: dto.amount,
         loanAmount: terms.loanAmount,
         guarantee: terms.guarantee,
@@ -127,7 +126,7 @@ export class LoansService {
       await this.persistPendingLoan({
         loan_id: loanId,
         user_wallet: wallet,
-        merchant_id: merchant.id,
+        vendor_id: vendor.id,
         amount: terms.amount,
         loan_amount: terms.loanAmount,
         guarantee: terms.guarantee,
@@ -226,7 +225,7 @@ export class LoansService {
         `
           id,
           loan_id,
-          merchant_id,
+          vendor_id,
           amount,
           loan_amount,
           guarantee,
@@ -239,10 +238,9 @@ export class LoansService {
           created_at,
           completed_at,
           defaulted_at,
-          merchants (
+          vendors (
             id,
-            name,
-            logo
+            name
           ),
           loan_payments (
             amount
@@ -332,9 +330,9 @@ export class LoansService {
     wallet: string,
     dto: LoanQuoteRequestDto,
     enforceMinimumReputation: boolean,
-  ): Promise<{ merchant: ValidMerchant; terms: LoanQuoteResponseDto }> {
+  ): Promise<{ vendor: ValidVendor; terms: LoanQuoteResponseDto }> {
     const reputation = await this.reputationService.getReputationScore(wallet);
-    const merchant = await this.validateMerchant(dto.merchant);
+    const vendor = await this.validateVendor(dto.vendor);
 
     if (enforceMinimumReputation && reputation.score < MIN_LOAN_REPUTATION_SCORE) {
       throw new BadRequestException({
@@ -359,7 +357,7 @@ export class LoansService {
     const schedule = this.generateSchedule(totalRepayment, dto.term);
 
     return {
-      merchant,
+      vendor,
       terms: {
         amount: dto.amount,
         guarantee,
@@ -373,29 +371,29 @@ export class LoansService {
     };
   }
 
-  private async validateMerchant(merchantId: string): Promise<ValidMerchant> {
+  private async validateVendor(vendorId: string): Promise<ValidVendor> {
     const client = this.supabaseService.getServiceRoleClient();
-    const { data: merchant, error } = await client
-      .from('merchants')
-      .select('id, name, is_active')
-      .eq('id', merchantId)
+    const { data: vendor, error } = await client
+      .from('vendors')
+      .select('id, name, verified')
+      .eq('id', vendorId)
       .single();
 
-    if (error || !merchant) {
+    if (error || !vendor) {
       throw new NotFoundException({
-        code: 'MERCHANT_NOT_FOUND',
-        message: 'Merchant not found. Please provide a valid merchant ID.',
+        code: 'VENDOR_NOT_FOUND',
+        message: 'Vendor not found. Please provide a valid vendor ID.',
       });
     }
 
-    if (!merchant.is_active) {
+    if (!vendor.verified) {
       throw new BadRequestException({
-        code: 'MERCHANT_INACTIVE',
-        message: `Merchant "${merchant.name}" is not currently accepting new loans.`,
+        code: 'VENDOR_NOT_VERIFIED',
+        message: `Vendor "${vendor.name}" is not currently accepting new loans.`,
       });
     }
 
-    return merchant;
+    return vendor;
   }
 
   private generateProvisionalLoanId(): string {
@@ -477,7 +475,7 @@ export class LoansService {
       remainingBalance,
       term: loan.term,
       status: loan.status as LoanListStatusFilter,
-      merchant: this.normalizeMerchant(loan),
+      vendor: this.normalizeVendor(loan),
       nextPayment,
       createdAt: loan.created_at,
       completedAt: loan.completed_at,
@@ -485,13 +483,12 @@ export class LoansService {
     };
   }
 
-  private normalizeMerchant(loan: LoanListRow): LoanListMerchantDto {
-    const merchant = Array.isArray(loan.merchants) ? loan.merchants[0] : loan.merchants;
+  private normalizeVendor(loan: LoanListRow): LoanListVendorDto {
+    const vendor = Array.isArray(loan.vendors) ? loan.vendors[0] : loan.vendors;
 
     return {
-      id: merchant?.id ?? loan.merchant_id ?? null,
-      name: merchant?.name ?? null,
-      logo: merchant?.logo ?? null,
+      id: vendor?.id ?? loan.vendor_id ?? null,
+      name: vendor?.name ?? null,
     };
   }
 

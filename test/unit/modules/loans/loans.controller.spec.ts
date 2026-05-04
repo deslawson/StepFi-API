@@ -61,7 +61,7 @@ describe('LoansController', () => {
   describe('getLoanQuote', () => {
     const validDto = {
       amount: 500,
-      merchant: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      vendor: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       term: 4,
     };
 
@@ -91,7 +91,7 @@ describe('LoansController', () => {
   describe('createLoan', () => {
     const validDto = {
       amount: 500,
-      merchant: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      vendor: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
       term: 4,
     };
 
@@ -170,10 +170,9 @@ describe('LoansController', () => {
           remainingBalance: 205.33,
           term: 4,
           status: LoanListStatusFilter.ACTIVE,
-          merchant: {
+          vendor: {
             id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
             name: 'TechStore',
-            logo: 'https://cdn.stepfi.app/techstore.png',
           },
           nextPayment: {
             dueDate: '2026-04-13T00:00:00.000Z',

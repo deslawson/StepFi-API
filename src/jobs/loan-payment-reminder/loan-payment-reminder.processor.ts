@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 import { SupabaseService } from '../../database/supabase.client';
 import {
   ActiveLoan,
-  MerchantInfo,
+  VendorInfo,
   ReminderCandidate,
   ReminderSummary,
   ReminderType,
@@ -92,11 +92,11 @@ export class LoanPaymentReminderProcessor extends WorkerHost {
         `Identified ${candidates.length} reminder candidates from ${loans.length} active loans`,
       );
 
-      const merchantCache = new Map<string, MerchantInfo>();
+      const vendorCache = new Map<string, VendorInfo>();
 
       for (const candidate of candidates) {
         try {
-          const merchant = await this.getMerchant(candidate.loan.merchant_id, merchantCache);
+          const vendor = await this.getVendor(candidate.loan.vendor_id, vendorCache);
           const isDuplicate = await this.isDuplicateReminder(
             candidate.loan.id,
             candidate.reminderType,
@@ -116,7 +116,7 @@ export class LoanPaymentReminderProcessor extends WorkerHost {
             continue;
           }
 
-          await this.createNotification(candidate, merchant);
+          await this.createNotification(candidate, vendor);
           summary.created++;
           summary.breakdown[candidate.reminderType]++;
         } catch (error) {
@@ -165,7 +165,7 @@ export class LoanPaymentReminderProcessor extends WorkerHost {
 
     const { data, error } = await db
       .from('loans')
-      .select('id, loan_id, user_wallet, merchant_id, amount, loan_amount, next_payment_due, remaining_balance, term')
+      .select('id, loan_id, user_wallet, vendor_id, amount, loan_amount, next_payment_due, remaining_balance, term')
       .eq('status', 'active')
       .not('next_payment_due', 'is', null);
 
@@ -248,30 +248,30 @@ export class LoanPaymentReminderProcessor extends WorkerHost {
     return (count ?? 0) > 0;
   }
 
-  private async getMerchant(
-    merchantId: string | null,
-    cache: Map<string, MerchantInfo>,
-  ): Promise<MerchantInfo | null> {
-    if (!merchantId) return null;
-    if (cache.has(merchantId)) return cache.get(merchantId)!;
+  private async getVendor(
+    vendorId: string | null,
+    cache: Map<string, VendorInfo>,
+  ): Promise<VendorInfo | null> {
+    if (!vendorId) return null;
+    if (cache.has(vendorId)) return cache.get(vendorId)!;
 
     const db = this.supabaseService.getServiceRoleClient();
     const { data, error } = await db
-      .from('merchants')
+      .from('vendors')
       .select('id, name')
-      .eq('id', merchantId)
+      .eq('id', vendorId)
       .single();
 
     if (error || !data) return null;
 
-    const merchant: MerchantInfo = { id: data.id, name: data.name };
-    cache.set(merchantId, merchant);
-    return merchant;
+    const vendor: VendorInfo = { id: data.id, name: data.name };
+    cache.set(vendorId, vendor);
+    return vendor;
   }
 
   private async createNotification(
     candidate: ReminderCandidate,
-    merchant: MerchantInfo | null,
+    vendor: VendorInfo | null,
   ): Promise<void> {
     const { loan, reminderType } = candidate;
     const db = this.supabaseService.getServiceRoleClient();
@@ -287,9 +287,9 @@ export class LoanPaymentReminderProcessor extends WorkerHost {
       due_date: loan.next_payment_due,
     };
 
-    if (merchant) {
-      notificationData.merchant_id = merchant.id;
-      notificationData.merchant_name = merchant.name;
+    if (vendor) {
+      notificationData.vendor_id = vendor.id;
+      notificationData.vendor_name = vendor.name;
     }
 
     const { error } = await db.from('notifications').insert({

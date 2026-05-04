@@ -5,7 +5,7 @@ import { SorobanService } from '../soroban/soroban.service';
 
 interface CreateLoanParams {
   loanId: string;
-  merchantId: string;
+  vendorId: string;
   amount: number;
   loanAmount: number;
   guarantee: number;
@@ -62,7 +62,7 @@ export class CreditLineContractClient {
         contract.call(
           'create_loan',
           StellarSdk.nativeToScVal(params.loanId, { type: 'string' }),
-          StellarSdk.nativeToScVal(params.merchantId, { type: 'string' }),
+          StellarSdk.nativeToScVal(params.vendorId, { type: 'string' }),
           StellarSdk.nativeToScVal(amount, { type: 'i128' }),
           StellarSdk.nativeToScVal(loanAmount, { type: 'i128' }),
           StellarSdk.nativeToScVal(guarantee, { type: 'i128' }),

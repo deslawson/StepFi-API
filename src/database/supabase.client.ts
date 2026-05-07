@@ -1,6 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as ws from 'ws';
 
 @Injectable()
 export class SupabaseService {
@@ -17,6 +18,9 @@ export class SupabaseService {
           autoRefreshToken: false,
           detectSessionInUrl: false,
         },
+        realtime: {
+          transport: ws as any,
+        },
       },
     );
 
@@ -28,6 +32,9 @@ export class SupabaseService {
           persistSession: false,
           autoRefreshToken: false,
           detectSessionInUrl: false,
+        },
+        realtime: {
+          transport: ws as any,
         },
       },
     );

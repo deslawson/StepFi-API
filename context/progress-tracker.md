@@ -10,7 +10,7 @@ Update this file after every completed contract change, fix, or architectural de
 
 ## Current Goal
 
-All 5 contracts build cleanly. Next: add `LoanType::LearnerInstallment` to creditline-contract and per-installment tracking to `RepaymentInstallment`.
+EAS build for Expo preview → then landing page → then GitHub issues → then Drips Wave
 
 ---
 
@@ -36,6 +36,10 @@ All 5 contracts build cleanly. Next: add `LoanType::LearnerInstallment` to credi
 ### Deployment
 - Created `scripts/deploy-testnet.sh` — full deployment script covering all 5 contracts in correct dependency order
 - Script outputs contract IDs and saves to `.env.contracts`
+- StepFi-API deployed on Render ✅
+- Supabase project created, 24 migrations applied ✅
+- Upstash Redis connected ✅
+- Swagger docs live ✅
 
 ### Documentation
 - `README.md` fully rewritten as StepFi-Contracts

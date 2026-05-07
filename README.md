@@ -157,6 +157,14 @@ npx supabase bootstrap
 
 The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
+## 🌐 Live Deployment
+
+| Resource | URL |
+|---|---|
+| **API Base** | https://stepfi-api.onrender.com/api/v1 |
+| **Swagger Docs** | https://stepfi-api.onrender.com/api/v1/docs |
+| **Health Check** | https://stepfi-api.onrender.com/api/v1/health |
+
 ## Docs
 
 Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).

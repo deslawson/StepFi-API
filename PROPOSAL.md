@@ -33,9 +33,9 @@ Check out our [open issues](https://github.com/StepFi-app/StepFi-API/issues) to 
 
 ## Links
 
-- 🔗 GitHub Org: https://github.com/StepFi-app
-- 📖 API Docs: https://stepfi-api.onrender.com/api/v1/docs *(coming soon)*
-- 📱 App Preview: *(coming soon)*
+- GitHub: https://github.com/StepFi-app
+- Live API: https://stepfi-api.onrender.com/api/v1
+- API Docs: https://stepfi-api.onrender.com/api/v1/docs
 
 ---
 

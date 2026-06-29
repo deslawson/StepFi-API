@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { SupabaseService } from '../supabase.client';
 
-export type VendorType = 'school' | 'bootcamp' | 'electronics' | 'books' | 'subscriptions';
+export type VendorType = 'school' | 'bootcamp' | 'certification' | 'tool';
 
 export interface VendorRecord {
     id: string;
@@ -11,10 +11,20 @@ export interface VendorRecord {
     verified: boolean;
 }
 
+export interface CreateVendorInput {
+    name: string;
+    type: VendorType;
+    country: string;
+    website: string;
+    description?: string;
+    wallet_address?: string | null;
+}
+
 export interface VendorDetailRecord extends VendorRecord {
     website: string | null;
     country: string | null;
     city: string | null;
+    description: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -110,6 +120,32 @@ export class VendorsRepository {
             }
             throw new InternalServerErrorException({
                 code: 'DATABASE_QUERY_ERROR',
+                message: error.message,
+            });
+        }
+
+        return data as VendorDetailRecord;
+    }
+
+    async create(input: CreateVendorInput): Promise<VendorDetailRecord> {
+        const { data, error } = await this.supabaseService
+            .getServiceRoleClient()
+            .from('vendors')
+            .insert({
+                name: input.name,
+                type: input.type,
+                country: input.country,
+                website: input.website,
+                description: input.description ?? null,
+                wallet_address: input.wallet_address ?? null,
+                verified: false,
+            })
+            .select('*')
+            .single();
+
+        if (error) {
+            throw new InternalServerErrorException({
+                code: 'DATABASE_VENDOR_CREATE_FAILED',
                 message: error.message,
             });
         }

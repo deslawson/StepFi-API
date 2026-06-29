@@ -285,6 +285,7 @@ export async function buildTestApp(): Promise<{
   process.env.VENDOR_REGISTRY_CONTRACT_ID = 'C_VENDOR_REGISTRY_E2E';
   process.env.PARAMETERS_CONTRACT_ID = 'C_PARAMETERS_E2E';
   process.env.STELLAR_SOROBAN_URL = 'https://testnet.stellar.org';
+  process.env.ADMIN_WALLETS = process.env.ADMIN_WALLETS || 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRSTUVW';
   process.env.REDIS_URL = '';
 
   const store = new InMemoryStore();
@@ -392,11 +393,12 @@ export async function seedVendor(
     id: overrides?.id ?? randomUUID(),
     wallet_address: createTestKeypair().publicKey(),
     name: overrides?.name ?? 'Test Vendor',
-    type: overrides?.type ?? 'electronics',
+    type: overrides?.type ?? 'school',
     verified: overrides?.verified ?? true,
     website: 'https://testvendor.com',
-    country: 'Nigeria',
+    country: 'NG',
     city: 'Lagos',
+    description: null,
     created_at: new Date().toISOString(),
   };
   mockDb.seed('vendors', vendor);

@@ -10,6 +10,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,9 +22,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { VendorsService } from './vendors.service';
 import { VendorResponseDto, VendorType } from './dto/vendor.dto';
+import { CreateVendorDto } from './dto/create-vendor.dto';
+import { VendorPaginatedResponseDto } from './dto/vendor-paginated-response.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { ApiKeyResponseDto, ApiKeyCreatedResponseDto } from './dto/api-key-response.dto';
 
@@ -31,13 +36,32 @@ import { ApiKeyResponseDto, ApiKeyCreatedResponseDto } from './dto/api-key-respo
 export class VendorsController {
   constructor(private readonly vendorsService: VendorsService) {}
 
+  @Post()
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new vendor (admin only)' })
+  @ApiResponse({ status: 201, description: 'Vendor created', type: VendorResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden — admin access required' })
+  async create(@Body() dto: CreateVendorDto): Promise<VendorResponseDto> {
+    return this.vendorsService.createVendor(dto);
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'List all vendors, optionally filtered by type' })
+  @ApiOperation({ summary: 'List all vendors, paginated and optionally filtered by type' })
   @ApiQuery({ name: 'type', enum: VendorType, required: false })
-  @ApiResponse({ status: 200, description: 'List of vendors', type: [VendorResponseDto] })
-  async list(@Query('type') type?: VendorType): Promise<VendorResponseDto[]> {
-    return this.vendorsService.getAll(type);
+  @ApiQuery({ name: 'page', type: Number, required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: Number, required: false, example: 20 })
+  @ApiResponse({ status: 200, description: 'Paginated list of vendors', type: VendorPaginatedResponseDto })
+  async list(
+    @Query('type') type?: VendorType,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ): Promise<VendorPaginatedResponseDto> {
+    return this.vendorsService.getAll(type, page, limit);
   }
 
   @Get(':id')

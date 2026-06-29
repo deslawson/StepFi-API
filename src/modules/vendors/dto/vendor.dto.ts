@@ -4,9 +4,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export enum VendorType {
   SCHOOL = 'school',
   BOOTCAMP = 'bootcamp',
-  ELECTRONICS = 'electronics',
-  BOOKS = 'books',
-  SUBSCRIPTIONS = 'subscriptions',
+  CERTIFICATION = 'certification',
+  TOOL = 'tool',
 }
 
 export class CreateVendorDto {
@@ -43,5 +42,6 @@ export class VendorResponseDto {
   @ApiPropertyOptional() website?: string;
   @ApiPropertyOptional() country?: string;
   @ApiPropertyOptional() city?: string;
+  @ApiPropertyOptional() description?: string;
   @ApiProperty() createdAt: string;
 }

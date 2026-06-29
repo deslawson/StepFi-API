@@ -8,6 +8,7 @@ import { createHash, randomBytes } from 'crypto';
 import { SupabaseService } from '../../database/supabase.client';
 import { VendorsRepository } from '../../database/repositories/vendors.repository';
 import { VendorResponseDto, VendorType } from './dto/vendor.dto';
+import { CreateVendorDto } from './dto/create-vendor.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { ApiKeyResponseDto, ApiKeyCreatedResponseDto } from './dto/api-key-response.dto';
 
@@ -22,7 +23,15 @@ interface VendorRow {
   website: string | null;
   country: string | null;
   city: string | null;
+  description: string | null;
   created_at: string;
+}
+
+interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 interface ApiKeyRow {
@@ -48,15 +57,21 @@ export class VendorsService {
     private readonly vendorsRepository: VendorsRepository,
   ) {}
 
-  async getAll(type?: VendorType): Promise<VendorResponseDto[]> {
+  async getAll(type?: VendorType, page = 1, limit = 20): Promise<PaginatedResult<VendorResponseDto>> {
     const client = this.supabaseService.getClient();
-    let query = client.from('vendors').select('*').order('created_at', { ascending: false });
+    const offset = (page - 1) * limit;
+
+    let query = client
+      .from('vendors')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (type) {
       query = query.eq('type', type);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       this.logger.error(`Failed to list vendors: ${error.message}`);
@@ -64,7 +79,12 @@ export class VendorsService {
     }
 
     const rows: VendorRow[] = (data ?? []) as VendorRow[];
-    return rows.map((row) => this.mapToDto(row));
+    return {
+      data: rows.map((row) => this.mapToDto(row)),
+      total: count ?? 0,
+      page,
+      limit,
+    };
   }
 
   async getById(id: string): Promise<VendorResponseDto> {
@@ -84,6 +104,18 @@ export class VendorsService {
     }
 
     return this.mapToDto(data as VendorRow);
+  }
+
+  async createVendor(dto: CreateVendorDto): Promise<VendorResponseDto> {
+    const record = await this.vendorsRepository.create({
+      name: dto.name,
+      type: dto.type as any,
+      country: dto.country,
+      website: dto.website,
+      description: dto.description,
+    });
+
+    return this.mapToDto(record as unknown as VendorRow);
   }
 
   async createApiKey(wallet: string, dto: CreateApiKeyDto): Promise<ApiKeyCreatedResponseDto> {
@@ -204,6 +236,7 @@ export class VendorsService {
       website: data.website ?? undefined,
       country: data.country ?? undefined,
       city: data.city ?? undefined,
+      description: data.description ?? undefined,
       createdAt: data.created_at,
     };
   }

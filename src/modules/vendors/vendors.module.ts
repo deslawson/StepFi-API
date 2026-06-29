@@ -3,11 +3,12 @@ import { VendorsService } from './vendors.service';
 import { VendorsController } from './vendors.controller';
 import { SupabaseService } from '../../database/supabase.client';
 import { VendorsRepository } from '../../database/repositories/vendors.repository';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [AuthModule],
-  providers: [VendorsService, VendorsRepository, SupabaseService],
+  providers: [VendorsService, VendorsRepository, SupabaseService, AdminGuard],
   controllers: [VendorsController],
   exports: [VendorsService],
 })

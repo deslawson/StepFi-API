@@ -62,11 +62,15 @@ EAS build for Expo preview → then landing page → then GitHub issues → then
 
 ## In Progress
 
+<<<<<<< HEAD
 - **Learner Profile Onboarding** — Extended profile table, added PATCH /learners/profile and GET /learners/profile/completion endpoints for rich onboarding. 
 
 - **Stellar.toml endpoint** — Added `GET /.well-known/stellar.toml` via `StellarTomlController` for Stellar ecosystem discoverability (Lobstr, StellarExpert). Returns TOML metadata with org info and 4 contract IDs. Cached in-memory with 1-hour TTL. (`stellar-toml.controller.ts`, `health.module.ts`, `stellar-toml.e2e-spec.ts`)
 
 - **Vendors Admin Endpoint** — Added `POST /api/v1/vendors` admin-guarded creation endpoint with full DTO validation. Updated `GET /vendors` to return paginated results. Added `GET /vendors/:id` with 404 handling. Created `AdminGuard`, `CreateVendorDto`, `VendorPaginatedResponseDto`. Added migration for `description` column. Updated `VendorType` enum to `school|bootcamp|certification|tool`. E2e tests cover admin create, non-admin 403, invalid DTO 400, paginated list, and 404 for unknown IDs. (`vendors.controller.ts`, `vendors.service.ts`, `vendors.repository.ts`, `dto/create-vendor.dto.ts`, `dto/vendor-paginated-response.dto.ts`, `common/guards/admin.guard.ts`, `supabase/migrations/20260628000000_add_vendor_description.sql`, `test/e2e/vendors.e2e-spec.ts`)
+=======
+- **Stellar.toml endpoint** — Added `GET /.well-known/stellar.toml` via `StellarTomlController` for Stellar ecosystem discoverability (Lobstr, StellarExpert). Returns TOML metadata with org info and 4 contract IDs. Cached in-memory with 1-hour TTL. (`stellar-toml.controller.ts`, `health.module.ts`, `stellar-toml.e2e-spec.ts`)
+>>>>>>> c7154fe65c966e23725a8f1464c2136812670bda
 
 ---
 
